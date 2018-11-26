@@ -14,10 +14,10 @@
 */
 struct CFABCtlBloc {
     float* beginPar;
-    float* endPar;
+    float* sizePar;
     float* speedPar;
     CFABCtlBloc() {
-        beginPar = endPar = speedPar = nullptr;
+        beginPar = sizePar = speedPar = nullptr;
     };
 };
 

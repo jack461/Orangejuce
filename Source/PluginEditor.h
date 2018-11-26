@@ -44,11 +44,12 @@ private:
     OrangejuceAudioProcessor& processor;
     AudioProcessorValueTreeState& valueTreeState;
 
-    Label  allLabels[3];
-    Slider  allSliders [3];
+    Label  allLabels[4];
+    Slider  allSliders [4];
     std::unique_ptr<SliderAttachment> l1beginAttachment;
-    std::unique_ptr<SliderAttachment> l1endAttachment;
+    std::unique_ptr<SliderAttachment> l1sizeAttachment;
     std::unique_ptr<SliderAttachment> l1speedAttachment;
+    std::unique_ptr<SliderAttachment> l1volAttachment;
 
     std::unique_ptr<Slider> newSlider;
     Identifier sliderName;

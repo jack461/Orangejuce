@@ -22,32 +22,41 @@ OrangejuceAudioProcessorEditor::OrangejuceAudioProcessorEditor (OrangejuceAudioP
      allLabels[0].setText ("Loop start", dontSendNotification);
      addAndMakeVisible (allLabels[0]);
 
-     allLabels[1].setText ("Loop end", dontSendNotification);
+     allLabels[1].setText ("Loop size", dontSendNotification);
      addAndMakeVisible (allLabels[1]);
 
      allLabels[2].setText ("Loop speed", dontSendNotification);
      addAndMakeVisible (allLabels[2]);
 
+     allLabels[3].setText ("Volume", dontSendNotification);
+     addAndMakeVisible (allLabels[3]);
+
      addAndMakeVisible (allSliders[0]);
      l1beginAttachment.reset (new SliderAttachment (valueTreeState, "l1begin", allSliders[0]));
-     allSliders[0].setTextValueSuffix(" %");
+     // allSliders[0].setTextValueSuffix(" %");
      allSliders[0].setPopupDisplayEnabled (true, false, this);
 
      addAndMakeVisible (allSliders[1]);
-     l1endAttachment.reset (new SliderAttachment (valueTreeState, "l1end", allSliders[1]));
-     allSliders[1].setTextValueSuffix(" %");
+     l1sizeAttachment.reset (new SliderAttachment (valueTreeState, "l1size", allSliders[1]));
+     // allSliders[1].setTextValueSuffix(" %");
 
      addAndMakeVisible (allSliders[2]);
      l1speedAttachment.reset (new SliderAttachment (valueTreeState, "l1speed", allSliders[2]));
      allSliders[2].setColour(Slider::thumbColourId, Colours::lightseagreen);
      
+     addAndMakeVisible (allSliders[3]);
+     l1volAttachment.reset (new SliderAttachment (valueTreeState, "l1Volume", allSliders[3]));
+    
      // Test : this slider is not automatically managed
      newSlider = std::make_unique<Slider>();
      addAndMakeVisible (* newSlider);
      newSlider->setColour(Slider::thumbColourId, Colours::red);
      sliderName = Identifier("newSlider");
      
-     setSize (paramSliderWidth + paramLabelWidth, jmax (150, paramControlHeight * 5));
+     setResizable (true, true);
+     int x = paramSliderWidth + paramLabelWidth, y = jmax (150, paramControlHeight * 6);
+     setResizeLimits (x, y, x+1400, y+200);
+     setSize (x, y);
      
      startTimer (1000);
      
@@ -69,7 +78,7 @@ void OrangejuceAudioProcessorEditor::paint (Graphics& g)
     
     g.setColour (Colours::orange);
     g.setFont (16.0f);
-    g.drawFittedText ("Orange JUCE", getLocalBounds(), Justification::topLeft, 1);
+    g.drawFittedText ("Orange -- " + SystemStats::getJUCEVersion(), getLocalBounds(), Justification::topLeft, 1);
     
 }
 
@@ -93,6 +102,10 @@ void OrangejuceAudioProcessorEditor::resized()
     xRect = r.removeFromTop (paramControlHeight);
     allLabels[2].setBounds (xRect.removeFromLeft (paramLabelWidth));
     allSliders[2].setBounds (xRect);
+
+    xRect = r.removeFromTop (paramControlHeight);
+    allLabels[3].setBounds (xRect.removeFromLeft (paramLabelWidth));
+    allSliders[3].setBounds (xRect);
 
     xRect = r.removeFromTop (paramControlHeight);
     xRect.removeFromLeft (paramLabelWidth);

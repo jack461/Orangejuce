@@ -16,10 +16,10 @@
 //==============================================================================
 /*
 */
-static const long MinBfSize {512};
-static const long MaxBfSize {0x1000000};
-static const long StdGuard {32};
-static const long StdSize {480000};
+static const long MinBfSize {4096};
+static const long MaxBfSize {0x10000000};
+static const long StdGuard {128};
+static const long StdSize {960000};
 
 class ReadCircFracAudioBuffer;
 
@@ -32,9 +32,17 @@ public:
 
     void push(float ech);
     bool isReady() { return ready; };
+    long bfSize() { return bSize; };
+    long bfStart() { return lowBuff; };
     
 private:
-    float * rawBuffer;
+    inline void allClear() {
+        for (long i=0; i<rawBSize; i++) rawBuffer[i]=0.0f;
+        for (long i=0; i<guard; i++) tmpInput[i]=auxCopy[i]=0.0f;
+    };
+    float * rawBuffer = nullptr;
+    float * tmpInput = nullptr;
+    float * auxCopy = nullptr;
     long guard;
     long rawBSize, bSize;
     // Working variables
@@ -42,7 +50,8 @@ private:
     long lowLimit, highLimit;
     // write index
     long wIndex;
-    bool ready;
+    long tmpIndex;
+    bool ready = false;
     friend class ReadCircFracAudioBuffer;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (CircFracAudioBuffer)
 };
@@ -68,22 +77,29 @@ public :
     bool checkReady()
     {
         ready = rawBuffer != nullptr && ctlb.beginPar != nullptr &&
-        ctlb.endPar != nullptr && ctlb.speedPar != nullptr;
-        beginValue = * ctlb.beginPar;
-        endValue = * ctlb.endPar;
-        speedValue = * ctlb.speedPar;
-        rIncr = double(speedValue);
-        updateLoop ();
+        ctlb.sizePar != nullptr && ctlb.speedPar != nullptr;
+        if (ready)
+        {
+            beginValue = * ctlb.beginPar;
+            sizeValue = * ctlb.sizePar;
+            speedValue = * ctlb.speedPar;
+            endValue = beginValue + sizeValue;
+            rIncr = double(speedValue);
+            updateLoop ();
+        }
         return ready;
     };
     void setIncr(double newIncr) { rIncr = newIncr; };
     double getPos() { return rIndex; };
     double getIncr() { return rIncr; };
+    long lpBegin() { return lowLoop-lowBuff; };
+    long lpSize() { return loopSize; };
     void setPos(double nPos) { rIndex = (nPos < lowLoop) ? lowLoop : (nPos > highLoop) ? highLoop : nPos ; };
 protected :
     void updateLoop ()
     {
         beginValue = beginValue < 0.0f ? 0.0f : beginValue > 100.0f ? 100.0f : beginValue;
+        endValue = beginValue + sizeValue;
         endValue = endValue < 0.0f ? 0.0f : endValue > 100.0f ? 100.0f : endValue;
         lowLoop = lowBuff + long(beginValue/100.0*(highBuff-lowBuff));
         highLoop = lowBuff + long(endValue/100.0*(highBuff-lowBuff));
@@ -115,7 +131,7 @@ private :
     double rIncr;  // current read increment
     double biGuard;  // 2*rguard
     
-    float beginValue, endValue, speedValue;
+    float beginValue, endValue, sizeValue, speedValue;
     bool modded;
     bool ready;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ReadCircFracAudioBuffer)

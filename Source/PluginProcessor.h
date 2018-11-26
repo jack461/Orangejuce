@@ -85,8 +85,10 @@ private:
     float* l1beginParameter  = nullptr;
     float* l1endParameter  = nullptr;
     float* l1speedParameter  = nullptr;
-
+    double smplRate;
     struct CFABCtlBloc looper1 ;
+    std::function<String(float)> fptedt[2];
+    std::function<float(String)> fptalx[1];
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (OrangejuceAudioProcessor)
 };

@@ -19,21 +19,15 @@ CircFracAudioBuffer::CircFracAudioBuffer(long bS, long cGard)
     ready = false;
     bS = bS < MinBfSize ? MinBfSize : bS;
     bS = bS > MaxBfSize ? MaxBfSize : bS;
-    cGard = cGard < 4 ? 4 : cGard;
-    cGard = cGard > 1024 ? 1024 : cGard;
+    cGard = cGard < 16 ? 16 : cGard;
+    cGard = cGard > 2048 ? 2048 : cGard;
     bS = bS + cGard + cGard;
     rawBuffer = new float[bS];
-    if (rawBuffer != nullptr)
-    {
-        rawBSize = bS;
-        // clear the buffer
-        for (long i=0; i<rawBSize; i++)
-            rawBuffer[i]=0.0f;
-        ready = true;
-    }
-    // DBG("*** Buffer size " << rawBSize); // here, we are ok...
+    if (rawBuffer != nullptr) rawBSize = bS;
     // Compute various position for read/write limits
     guard = cGard;
+    tmpInput = new float[guard];
+    auxCopy = new float[guard];
     // The "values" will be written in [lowBuff  ...  highBuff]
     lowBuff = guard;
     highBuff = rawBSize - guard - 1;
@@ -42,21 +36,56 @@ CircFracAudioBuffer::CircFracAudioBuffer(long bS, long cGard)
     lowLimit = lowBuff + guard;
     bSize = highBuff - lowBuff +1;
     wIndex = lowBuff;
+    tmpIndex = 0;
+    if (rawBuffer == nullptr || tmpInput == nullptr || auxCopy== nullptr)
+    {
+        if (rawBuffer != nullptr) { delete [] rawBuffer; rawBuffer = nullptr; }
+        if (tmpInput != nullptr) { delete [] tmpInput; tmpInput = nullptr; }
+        if (auxCopy != nullptr) { delete [] auxCopy; auxCopy = nullptr; }
+        DBG("**** ERROR : CircFracAudioBuffer init fail ");
+        jassertfalse;
+        return;
+    }
+    allClear();
+    ready = true;
     DBG("**** CircFracAudioBuffer<- ");
 }
 
 CircFracAudioBuffer::~CircFracAudioBuffer()
 {
-    if (rawBuffer != nullptr)
-    {
-        delete [] rawBuffer;
-    }
+    if (rawBuffer != nullptr) { delete [] rawBuffer; rawBuffer = nullptr; }
+    if (tmpInput != nullptr) { delete [] tmpInput; tmpInput = nullptr; }
+    if (auxCopy != nullptr) { delete [] auxCopy; auxCopy = nullptr; }
+    ready = false;
     DBG("**** ~CircFracAudioBuffer* ");
 }
 
 //  Implementation
 void CircFracAudioBuffer::push (float ech)
 {
+    jassert(ready);
+    if (! ready) return;
+    jassert(wIndex >= lowBuff && wIndex < rawBSize);
+    // Manage the "slow write" function
+    if (tmpIndex >= guard) tmpIndex = 0;
+    tmpInput[tmpIndex] = ech;
+    auxCopy[tmpIndex] = rawBuffer[wIndex];
+    // Manage the transition
+    long j = tmpIndex;
+    long k = wIndex;
+    for (long i=0; i<guard; i++)
+    {
+        float alpha = ((1.0f+i)/float(guard));
+        if (j < 0) j+= guard;
+        float val = tmpInput[j]*alpha + auxCopy[j]*(1.0f-alpha);
+        rawBuffer[k] = val;
+        if (k < lowLimit) rawBuffer[k+bSize] = val;
+        if (k > highLimit) rawBuffer[k-bSize] = val;
+        j--; k--;
+    }
+    ++wIndex; if (wIndex >= rawBSize) wIndex = lowLimit;
+    ++tmpIndex;
+    /*
     // This merge the cases "start of buffer" and "end of buffer"
     if (wIndex > highLimit)
     {
@@ -75,6 +104,7 @@ void CircFracAudioBuffer::push (float ech)
     rawBuffer[wIndex] = ech;
     ++wIndex;
     return;
+    */
 }
 
 
@@ -125,9 +155,9 @@ float ReadCircFracAudioBuffer::get()
         DBG("****   BEGIN -> " << beginValue);
         modded = true;
     }
-    if (endValue != * ctlb.endPar)
+    if (sizeValue != * ctlb.sizePar)
     {
-        endValue = * ctlb.endPar;
+        sizeValue = * ctlb.sizePar;
         DBG("****   END -> " << endValue);
         modded = true;
     }
