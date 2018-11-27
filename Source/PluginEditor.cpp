@@ -34,7 +34,7 @@ OrangejuceAudioProcessorEditor::OrangejuceAudioProcessorEditor (OrangejuceAudioP
      addAndMakeVisible (allSliders[0]);
      l1beginAttachment.reset (new SliderAttachment (valueTreeState, "l1begin", allSliders[0]));
      // allSliders[0].setTextValueSuffix(" %");
-     allSliders[0].setPopupDisplayEnabled (true, false, this);
+     allSliders[0].setPopupDisplayEnabled (true, true, this);
 
      addAndMakeVisible (allSliders[1]);
      l1sizeAttachment.reset (new SliderAttachment (valueTreeState, "l1size", allSliders[1]));

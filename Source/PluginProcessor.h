@@ -15,6 +15,11 @@
 #include "CircFracAudioBuffer.h"
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "Utilities.h"
+
+
+static constexpr float minInfinity { -1010.0 };
+static constexpr float minDBValue { -1000.0 };
 
 //==============================================================================
 /**
@@ -90,5 +95,16 @@ private:
     std::function<String(float)> fptedt[2];
     std::function<float(String)> fptalx[1];
 
+    // Declare a custom volume conrol vith various steps...
+    CustomNormalisableRangeHelper volCtl {new std::vector<float>{
+        minInfinity, minInfinity, minDBValue, minDBValue, minDBValue, -800.0, -600.0, -450.0, -340.0,
+        -260.0, -200.0, -150.0, -110.0, -80.0, -80.0, -80.0, -60.0, -48.0, -40.0, -40.0, -40.0,
+        -34.0, -28.0, -22.0, -20.0, -20.0, -20.0, -18.0, -15.0, -12.0, -12.0, -12.0, -10.0,
+        -8.0, -6.0, -6.0, -6.0, -5.0, -4.5, -4.0, -3.0, -3.0, -3.0, -2.5, -2.0, -1.5, -1.0, -1.0, -1.0,
+        -0.8, -0.6, -0.4, -0.3, -0.2, -0.15, -0.1, -0.1, -0.1, -0.05, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.05, 0.1, 0.1, 0.1, 0.15, 0.2, 0.3, 0.4, 0.6, 0.8, 1.0, 1.0, 1.0, 1.5, 2.0,
+        2.5, 3.0, 3.0, 3.0, 4.0, 4.5, 5.0, 6.0, 6.0, 6.0, 8.0, 10.0, 12.0, 12.0, 12.0
+    } };
+    
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (OrangejuceAudioProcessor)
 };

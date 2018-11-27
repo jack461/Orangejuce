@@ -13,6 +13,7 @@
 #include "CircFracAudioBuffer.h"
 #include "Utilities.h"
 
+
 //==============================================================================
 OrangejuceAudioProcessor::OrangejuceAudioProcessor()
      :
@@ -31,12 +32,12 @@ OrangejuceAudioProcessor::OrangejuceAudioProcessor()
      rca (cfab, looper1)
 {
     DBG("**** OrangejuceAudioProcessor 1.0.1 -> ");
-    initUtilities();
+ 
     using Parameter = AudioProcessorValueTreeState::Parameter;
     
-    fptedt[0] = [this] (float p) { return dbEdTime(cfab.bfSize()*p/smplRate/100.0, 0, 2); };
-    fptedt[1] = [this] (float p) { return dbEdTimeV(cfab.bfSize()*p/smplRate/100.0); };
-    fptalx[0] = [this] (String str) { return strToDuration(str)*smplRate/cfab.bfSize()*100.0;};
+    fptedt[0] = [this] (float p) { return cnrh::dbEdTime(cfab.bfSize()*p/smplRate/100.0, 0, 2); };
+    fptedt[1] = [this] (float p) { return cnrh::dbEdTimeV(cfab.bfSize()*p/smplRate/100.0); };
+    fptalx[0] = [this] (String str) { return cnrh::strToDuration(str)*smplRate/cfab.bfSize()*100.0;};
     
     parameters.createAndAddParameter (std::make_unique<Parameter> (
                                           "l1begin",       // parameterID
@@ -62,21 +63,18 @@ OrangejuceAudioProcessor::OrangejuceAudioProcessor()
                                           "",           // parameter label (suffix)
                                           NormalisableRange<float> (-4.0f, 4.0f, 0.0001f),    // range
                                           1.0f,         // default value
-                                          [] (float p) { return dbEdit(double(p), 4); },
+                                          [] (float p) { return cnrh::dbEdit(double(p), 4); },
                                           nullptr));
 
+    
     parameters.createAndAddParameter (std::make_unique<Parameter> (
                                           "l1Volume",       // parameterID
                                           "Volume",       // parameter name
                                           "",           // parameter label
-                                          NormalisableRange<float> (-1010.0f, 20.0f,    // range
-                                                 [](float start, float end, float gain) { return (float)cv01todB((float)gain); },
-                                                 [](float start, float end, float dB) { return (float)cvdBto01((float)dB); },
-                                                 [](float start, float end, float val) { return nullSnap(start, end, val); }),
+                                          volCtl.normalisableRange (),
                                           -6.0f,         // default value in dB
-                                          [] (float p) { return dBToStr(float(p)); },
-                                          [] (String str) { return (float)dBstrToDbl(str) ; }));
-
+                                          [] (float p) { return cnrh::dBToStr(float(p)); },
+                                          [] (String str) { return (float)cnrh::dBstrToDbl(str) ; }));
   
                                           
     parameters.state = ValueTree (Identifier ("OrangeV02"));
@@ -95,6 +93,9 @@ OrangejuceAudioProcessor::OrangejuceAudioProcessor()
     DBG("ooo   33ms             ->  " <<  strToDuration(String("33ms")));
     DBG("ooo   6ks9             ->  " <<  strToDuration(String("6ks9")));
      */
+    // volCtl.setRange(-1010, 12);
+    // volCtl.setRange(-160, 10);
+    volCtl.setRange(-1010, 12);
 }
 
 OrangejuceAudioProcessor::~OrangejuceAudioProcessor()

@@ -12,6 +12,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+namespace cnrh {
+    
+static constexpr float minInfinity { -1010.0 };
+static constexpr float minDBValue { -1000.0 };
 
 
 /*
@@ -31,11 +35,10 @@ static constexpr float dBScale[dBScaleSize] {
 /** This define a dB scale with some steps at 12dB, 6dB, 3dB, 1dB, 0.1dB, 0dB,
     -0.1dB, -1dB, -3dB, -6dB, -20dB, -40dB, -80dB, -1000dB and -oo
  */
-static constexpr float minInfinity { -1010.0 };
-static constexpr float minDBValue { -1000.0 };
-static constexpr int dBScaleSize {92};
-static constexpr float dBScale[dBScaleSize] {
-
+// constexpr int dBScaleSize {92};
+// constexpr
+/*
+float dBScale[dBScaleSize] {
     minInfinity, minInfinity, minDBValue, minDBValue, minDBValue, -800.0, -600.0, -450.0, -340.0,
     -260.0, -200.0, -150.0, -110.0, -80.0, -80.0, -80.0, -60.0, -48.0, -40.0, -40.0, -40.0,
     -34.0, -28.0, -22.0, -20.0, -20.0, -20.0, -18.0, -15.0, -12.0, -12.0, -12.0, -10.0,
@@ -45,7 +48,7 @@ static constexpr float dBScale[dBScaleSize] {
     2.5, 3.0, 3.0, 3.0, 4.0, 5.0, 6.0, 6.0, 6.0, 8.0, 10.0, 12.0, 12.0, 12.0
     
 };
-
+*/
     /*
     12.0, 12.0, 12.0, 10.0, 8.0, 6.0, 6.0, 5.0, 4.0, 3.0, 3.0, 2.5,
     2.0, 1.5, 1.0, 1.0, 0.8, 0.6, 0.4, 0.3, 0.2, 0.15, 0.1, 0.05,
@@ -56,31 +59,35 @@ static constexpr float dBScale[dBScaleSize] {
      */
 
 // Currently not used...
-static float dBConverted[dBScaleSize];
+// static float dBConverted[dBScaleSize];
 
 /** A relative comparison of two values,
  with "eps" being a comparison tolerence
  */
-static bool eqVal(float f1, float f2, float eps)
+bool eqVal(float f1, float f2, float eps)
 {
     return eps * (fabs(f1) + fabs(f2)) >= fabs(f1-f2);
 }
 
 /** Find an entry in an array of non decreasing values
  */
-static int findLow(float val, const float * tab, int tabsize)
+static int findLow(float val, const float * tab, int tabsize, int lowB = -1, int highB = -1, int dir=0)
 {
-    int lb=0, hb = tabsize-1, mid;
+    int highLimit = tabsize-1;
+    lowB = lowB < 0 ? 0 : lowB > highLimit ? highLimit : lowB;
+    highB = (highB < 0 || highB > highLimit) ? highLimit : highB < lowB ? lowB : highB;
+ 
+    int lb=lowB, hb = highB, mid;
     while ((hb - lb) > 1)
     {
         mid = (hb + lb)/2;
         if (val == tab[mid]) {
             // take care of a sequence of identical values
             hb = lb = mid;
-            while (lb > 0 && val == tab[lb-1]) --lb;
-            if (lb == 0) return lb;
-            while (hb < tabsize-1 && val == tab[hb+1]) ++hb;
-            if (hb == tabsize-1) return hb;
+            while (lb > lowB && val == tab[lb-1]) --lb;
+            if (lb == lowB || dir < 0) return lb;
+            while (hb < highB && val == tab[hb+1]) ++hb;
+            if (hb == highB || dir > 0) return hb;
             return (hb+lb)/2;
         }
         if (val < tab[mid]) hb = mid;
@@ -319,6 +326,7 @@ String dBToStr(float db)
 /** Convert a 0-1 slider value to a value in decibels
  according to our conversion array, with linear interpolation
  */
+/*
 static inline float innercv01todB(float val)
 {
     val = val < 0.0 ? 0.0 : val > 1.0 ? 1.0 : val;
@@ -344,10 +352,11 @@ static inline float innercvdBto01(float val)
     // DBG("      cvdBto01:  " << val << "    p = " << p << "  [" << u << "  " << val << "  " << v  <<"]  --> " << w << "  --> " << z);
     return z;
 }
-
+*/
 /*
  Check and trace the function
  */
+/*
 float cv01todB(float val)
 {
     // static long cnt=100000000;
@@ -368,6 +377,7 @@ float cvdBto01(float val)
     // jassert(val == innercv01todB(z));
     return z;
 }
+*/
 
 float dBstrToDbl(String sstr)
 {
@@ -379,13 +389,90 @@ float dBstrToDbl(String sstr)
     return dbl;
 }
 
-//===================================================
-// Initialize Utilities
-void initUtilities()
+
+};
+
+/**
+   Custom control validation
+*/
+void CustomNormalisableRangeHelper::checkValues()
 {
-    for (int i=0; i<dBScaleSize; i++)
+    // first, check the vector
+    vSize = (int)points.size();
+    jassert(vSize >= 2);
+    if (lowB == 0.0 && highB == 0.0)
     {
-        double db = dBScale[i];
-        dBConverted[i] = db < minDBValue ? 0.0 : std::pow(10.0, db*0.05);
+        lowB = points[0];  highB = points[vSize - 1];
     }
+    jassert(lowB < highB);
+    lowIndex = 0;
+    highIndex = vSize - 1;
+    lowVal = points[0];
+    highVal = points[highIndex];
+    jassert(lowVal < highVal);
+    float low = lowVal;
+    float c;
+    // Check values are not decreasing
+    for (int i=0; i<=highIndex; ++i)
+    {
+        c = points[i];
+        jassert (c >= low);
+        if (c < low) c = low;
+        if (c > highVal) c = highVal;
+        points[i] = low = c;
+    };
+    jassert(points[0] <= lowB && points[highIndex] >= highB);
+    // then, check the limits
+    setRange(lowB, highB);
+}
+
+void CustomNormalisableRangeHelper::setRange(float lowV, float highV)
+{
+    jassert(lowV < highV);
+    if (lowV <= points[0])
+    {
+        lowIndex = 0; lowV = points[0];
+    }
+    else
+    {
+        lowIndex = cnrh::findLow(lowV, points.data(), vSize, 0, vSize - 1, -1);
+    }
+    if (highV >= points[vSize - 1])
+    {
+        highIndex = vSize - 1; highV = points[vSize - 1];
+    }
+    else
+    {
+        highIndex = cnrh::findLow(highV, points.data(), vSize, 0, vSize - 1, 1);
+        while (points[highIndex] < highV && highIndex < vSize - 1) highIndex++;
+    }
+    lowB = points[lowIndex];
+    highB = points[highIndex];
+    jassert(lowIndex < highIndex && lowV >= lowB && highV <= highB);
+    DBG("*** setRange *** " << lowVal << " [" << lowIndex << ":" << lowB << " " << highIndex << ":" << highB << "] " <<  highVal << "  " << vSize);
+}
+
+float CustomNormalisableRangeHelper::cv01ToValue(float val)
+{
+    val = val < 0.0 ? 0.0 : val > 1.0 ? 1.0 : val;
+    float idx = lowIndex + val*(highIndex - lowIndex);
+    int j = (int)idx;
+    float alph = idx - (float)j;
+    float z = (points[j] * (1.0 - alph) + points[j+1] * alph);
+    DBG("--> cv01ToValue:  " << val << " [" << idx << " " << alph << "]  --> " << z << " dB");
+    return z;
+}
+
+
+float CustomNormalisableRangeHelper::cvValueTo01(float val)
+{
+    val = val < lowB ? lowB : val > highB ? highB : val;
+    int p = cnrh::findLow(val, points.data(), vSize, lowIndex, highIndex, 0);
+    if (p == lowIndex) return 0.0;
+    if (p == highIndex) return 1.0;
+    float u=points[p], v=points[p+1];
+    float w = (u != v) ? p + (val-u)/(v-u) : (float)p;
+    float z = (w - lowIndex)/(highIndex - lowIndex);
+    DBG("--> cvValueTo01:  " << val << " dB  [" << p << " " << w << "]  --> " << z);
+    return z;
 }
