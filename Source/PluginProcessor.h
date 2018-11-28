@@ -95,7 +95,7 @@ private:
     std::function<String(float)> fptedt[2];
     std::function<float(String)> fptalx[1];
 
-    // Declare a custom volume conrol vith various steps...
+    // Declare a custom volume control vith various steps...
     CustomNormalisableRangeHelper volCtl {new std::vector<float>{
         minInfinity, minInfinity, minDBValue, minDBValue, minDBValue, -800.0, -600.0, -450.0, -340.0,
         -260.0, -200.0, -150.0, -110.0, -80.0, -80.0, -80.0, -60.0, -48.0, -40.0, -40.0, -40.0,

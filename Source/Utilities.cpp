@@ -18,49 +18,6 @@ static constexpr float minInfinity { -1010.0 };
 static constexpr float minDBValue { -1000.0 };
 
 
-/*
-static constexpr int dBScaleSize {59};
-static constexpr float dBScale[dBScaleSize] {
-    -1010.0, -1000.0, -800.0, -600.0, -450.0, -340.0,
-    -260.0, -200.0, -150.0, -110.0, -80.0, -60.0, -48.0, -40.0,
-    -38.0, -28.0, -22.0, -20.0, -18.0, -15.0, -12.0, -10.0,
-    -8.0, -6.0, -5.0, -4.0, -3.0, -2.5, -2.0, -1.5, -1.0,
-    -0.8, -0.6, -0.4, -0.3, -0.2, -0.15, -0.1, -0.05, 0.0,
-    0.05, 0.1, 0.15, 0.2, 0.3, 0.4, 0.6, 0.8, 1.0, 1.5, 2.0,
-    2.5, 3.0, 4.0, 5.0, 6.0,  8.0, 10.0,  12.0
-};
-*/
-
-
-/** This define a dB scale with some steps at 12dB, 6dB, 3dB, 1dB, 0.1dB, 0dB,
-    -0.1dB, -1dB, -3dB, -6dB, -20dB, -40dB, -80dB, -1000dB and -oo
- */
-// constexpr int dBScaleSize {92};
-// constexpr
-/*
-float dBScale[dBScaleSize] {
-    minInfinity, minInfinity, minDBValue, minDBValue, minDBValue, -800.0, -600.0, -450.0, -340.0,
-    -260.0, -200.0, -150.0, -110.0, -80.0, -80.0, -80.0, -60.0, -48.0, -40.0, -40.0, -40.0,
-    -34.0, -28.0, -22.0, -20.0, -20.0, -20.0, -18.0, -15.0, -12.0, -12.0, -12.0, -10.0,
-    -8.0, -6.0, -6.0, -6.0, -5.0, -4.0, -3.0, -3.0, -3.0, -2.5, -2.0, -1.5, -1.0, -1.0, -1.0,
-    -0.8, -0.6, -0.4, -0.3, -0.2, -0.15, -0.1, -0.1, -0.1, -0.05, 0.0, 0.0, 0.0, 0.0, 0.0,
-    0.05, 0.1, 0.1, 0.1, 0.15, 0.2, 0.3, 0.4, 0.6, 0.8, 1.0, 1.0, 1.0, 1.5, 2.0,
-    2.5, 3.0, 3.0, 3.0, 4.0, 5.0, 6.0, 6.0, 6.0, 8.0, 10.0, 12.0, 12.0, 12.0
-    
-};
-*/
-    /*
-    12.0, 12.0, 12.0, 10.0, 8.0, 6.0, 6.0, 5.0, 4.0, 3.0, 3.0, 2.5,
-    2.0, 1.5, 1.0, 1.0, 0.8, 0.6, 0.4, 0.3, 0.2, 0.15, 0.1, 0.05,
-    0.0, 0.0, 0.0, 0.0, -0.05, -0.1, -0.15, -0.2, -0.3, -0.4, -0.6, -0.8,
-    -1.0, -1.0, -1.5, -2.0, -2.5, -3.0, -3.0, -4.0, -5.0, -6.0, -6.0, -8.0, -10.0, -12.0, -12.0,
-    -15.0, -18.0, -20.0, -20.0, -22.0, -28.0, -38.0, -40.0, -40.0, -48.0, -60.0, -80.0, -80.0, -110.0,
-    -150.0, -200.0, -260.0, -340.0, -450.0, -600.0, -800.0, -1000.0, -1000.0, -1010.0, -1010.0 
-     */
-
-// Currently not used...
-// static float dBConverted[dBScaleSize];
-
 /** A relative comparison of two values,
  with "eps" being a comparison tolerence
  */
@@ -459,7 +416,8 @@ float CustomNormalisableRangeHelper::cv01ToValue(float val)
     int j = (int)idx;
     float alph = idx - (float)j;
     float z = (points[j] * (1.0 - alph) + points[j+1] * alph);
-    DBG("--> cv01ToValue:  " << val << " [" << idx << " " << alph << "]  --> " << z << " dB");
+    DBG("[" << (++cntCv01ToValue) <<
+        "] --> cv01ToValue:  " << val << " [" << idx << " " << alph << "]  --> " << z << " dB");
     return z;
 }
 
@@ -473,6 +431,7 @@ float CustomNormalisableRangeHelper::cvValueTo01(float val)
     float u=points[p], v=points[p+1];
     float w = (u != v) ? p + (val-u)/(v-u) : (float)p;
     float z = (w - lowIndex)/(highIndex - lowIndex);
-    DBG("--> cvValueTo01:  " << val << " dB  [" << p << " " << w << "]  --> " << z);
+    DBG("[" << (++cntCvValueTo01) <<
+        "] --> cvValueTo01:  " << val << " dB  [" << p << " " << w << "]  --> " << z);
     return z;
 }

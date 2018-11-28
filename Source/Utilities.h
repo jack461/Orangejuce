@@ -36,6 +36,8 @@ inline float nullSnap(float start, float end, float val)
  The values should be in a non decreasing order
  Fuctions help mapping to [0 1] and reciprocal.
  Can provide an appropriate NormalisableRange.
+ --
+ Half bonus : you can change the displayed range...
  */
 class CustomNormalisableRangeHelper
 {
@@ -43,10 +45,15 @@ public:
     CustomNormalisableRangeHelper(std::vector<float> * cPoints, float lowV=0.0, float highV=0.0)
     : points(* cPoints)
     {
-        lowB=lowVal=lowV; highB=highVal=highV; checkValues();
+        DBG("**** CustomNormalisableRangeHelper");
+        lowB=lowVal=lowV; highB=highVal=highV;
+        cntCv01ToValue = cntCvValueTo01 = 0;
+        checkValues();
+        cntCv01ToValue = cntCvValueTo01 = 1000000;
     };
     ~CustomNormalisableRangeHelper()
     {
+        DBG("**** ~CustomNormalisableRangeHelper ** Counters : " << cntCv01ToValue << "  " << cntCvValueTo01);
     };
     float lowBound() { return lowVal; };
     float highBound() { return highVal; };
@@ -69,6 +76,7 @@ private:
     float lowB, highB; // current low & high values
     int lowIndex, highIndex; // current used limits
     int vSize; // size of point vector
+    long cntCv01ToValue, cntCvValueTo01; // temporary counters for debugging
     void checkValues();
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (CustomNormalisableRangeHelper)
 };

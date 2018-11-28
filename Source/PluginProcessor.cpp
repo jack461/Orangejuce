@@ -63,7 +63,8 @@ OrangejuceAudioProcessor::OrangejuceAudioProcessor()
                                           "",           // parameter label (suffix)
                                           NormalisableRange<float> (-4.0f, 4.0f, 0.0001f),    // range
                                           1.0f,         // default value
-                                          [] (float p) { return cnrh::dbEdit(double(p), 4); },
+                                          // [] (float p) { return cnrh::dbEdit(double(p), 4); }, // or equivalent:
+                                          std::bind(cnrh::dbEdit, std::placeholders::_1, 4),
                                           nullptr));
 
     
@@ -73,8 +74,8 @@ OrangejuceAudioProcessor::OrangejuceAudioProcessor()
                                           "",           // parameter label
                                           volCtl.normalisableRange (),
                                           -6.0f,         // default value in dB
-                                          [] (float p) { return cnrh::dBToStr(float(p)); },
-                                          [] (String str) { return (float)cnrh::dBstrToDbl(str) ; }));
+                                          cnrh::dBToStr,
+                                          cnrh::dBstrToDbl));
   
                                           
     parameters.state = ValueTree (Identifier ("OrangeV02"));
@@ -95,7 +96,7 @@ OrangejuceAudioProcessor::OrangejuceAudioProcessor()
      */
     // volCtl.setRange(-1010, 12);
     // volCtl.setRange(-160, 10);
-    volCtl.setRange(-1010, 12);
+    // volCtl.setRange(-1010, 12);
 }
 
 OrangejuceAudioProcessor::~OrangejuceAudioProcessor()
